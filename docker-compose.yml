@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: cureety
+    container_name: postgres
+    volumes:
+      - cureety:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+
+volumes:
+  cureety:
+    driver: local
