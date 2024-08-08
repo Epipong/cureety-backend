@@ -14,4 +14,7 @@ docker_up = ["docker", "compose", "up", "-d"]
 
 [dependencies]
 actix-web = "4.8.0"
+diesel = { version = "2.2.2", features = ["postgres", "r2d2"] }
 dotenv = "0.15.0"
+env_logger = "0.11.5"
+r2d2 = "0.8.10"
