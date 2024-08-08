@@ -1,4 +1,5 @@
-use actix_web::{web, App, HttpServer};
+use actix_identity::IdentityMiddleware;
+use actix_web::{middleware, web, App, HttpServer};
 use diesel::{r2d2, PgConnection};
 
 #[actix_web::main]
@@ -14,11 +15,19 @@ async fn main() -> std::io::Result<()> {
         .expect("Failed to create pool.");
     let domain = std::env::var("DOMAIN").unwrap_or_else(|_| "localhost".to_owned());
 
+    let port: u16 = std::env::var("PORT").unwrap_or(String::from("8080")).parse().expect("PORT must be number");
+    log::info!("starting HTTP server at http://{domain}:{port}");
+
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(pool.clone()))
+            .wrap(IdentityMiddleware::default())
+            .wrap(middleware::Logger::default())
+            .service(
+                web::scope("/api")
+            )
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind(("127.0.0.1", port))?
     .run()
     .await
 }
