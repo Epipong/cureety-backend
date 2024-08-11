@@ -18,18 +18,18 @@ pub enum Roles {
     Patient,
 }
 
-impl ToSql<Roles, Pg> for Roles {
+impl ToSql<crate::schema::sql_types::Roles, Pg> for Roles {
     fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> serialize::Result {
-        let _ = match *self {
-            Roles::Admin => out.write_all(b"admin"),
-            Roles::Doctor => out.write_all(b"doctor"),
-            Roles::Patient => out.write_all(b"patient"),
+        match *self {
+            Roles::Admin => out.write_all(b"admin")?,
+            Roles::Doctor => out.write_all(b"doctor")?,
+            Roles::Patient => out.write_all(b"patient")?,
         };
         Ok(IsNull::No)
     }
 }
 
-impl FromSql<Roles, Pg> for Roles {
+impl FromSql<crate::schema::sql_types::Roles, Pg> for Roles {
     fn from_sql(bytes: PgValue<'_>) -> deserialize::Result<Self> {
         match bytes.as_bytes() {
             b"admin" => Ok(Roles::Admin),
@@ -48,7 +48,7 @@ pub struct User {
     pub username: String,
     pub email: String,
     pub hash: String,
-    // pub role: Roles,
+    pub role: Roles,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
