@@ -3,20 +3,15 @@ name = "cureety"
 version = "0.1.0"
 edition = "2021"
 
-[alias]
-b = "build"
-c = "check"
-d = "doc"
-t = "test"
-r = "run"
-rm = "remove"
-docker_up = ["docker", "compose", "up", "-d"]
-
 [dependencies]
 actix-identity = "0.7.1"
 actix-web = "4.8.0"
-diesel = { version = "2.2.2", features = ["postgres", "r2d2"] }
+chrono = { version = "0.4.38", features = ["serde"] }
+diesel = { version = "2.2.2", features = ["postgres", "r2d2", "uuid", "chrono"] }
+diesel-derive-enum = "2.1.0"
 dotenv = "0.15.0"
 env_logger = "0.11.5"
 log = "0.4.22"
 r2d2 = "0.8.10"
+serde = "1.0.205"
+uuid = { version = "1.10.0", features = ["serde", "v4"] }
