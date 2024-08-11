@@ -12,7 +12,7 @@ pub async fn users_list(pool: web::Data<Pool>) -> impl Responder {
     let items = users::table
         .select(User::as_select())
         .load::<User>(&mut conn)
-        .unwrap();
+        .expect("select");
 
     HttpResponse::Ok().json(items)
 }   

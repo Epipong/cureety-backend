@@ -1,34 +1,11 @@
 // @generated automatically by Diesel CLI.
 
 pub mod sql_types {
-    use serde::{Deserialize, Serialize};
+    use diesel::sql_types::SqlType;
 
-    #[derive(
-        Debug,
-        diesel::query_builder::QueryId,
-        Clone,
-        diesel::sql_types::SqlType,
-        Serialize,
-        Deserialize,
-        PartialEq,
-    )]
+    #[derive(SqlType, Debug)]
     #[diesel(postgres_type(name = "roles"))]
-    #[serde(untagged)]
-    pub enum Roles {
-        Admin,
-        Doctor,
-        Patient,
-    }
-
-    impl Roles {
-        fn as_str(&self) -> &'static str {
-            match self {
-                Roles::Admin => "admin",
-                Roles::Doctor => "doctor",
-                Roles::Patient => "patient",
-            }
-        }
-    }
+    pub struct Roles;
 }
 
 diesel::table! {
