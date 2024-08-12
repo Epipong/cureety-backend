@@ -47,8 +47,11 @@ pub async fn create_user(body: web::Json<UserCreate>, pool: web::Data<Pool>) -> 
         updated_at: datetime,
     };
 
-    match insert_into(users).values(&new_user).execute(&mut conn) {
-        Ok(_) => HttpResponse::Ok().json(&new_user),
+    match insert_into(users)
+        .values(&new_user)
+        .get_result::<User>(&mut conn)
+    {
+        Ok(created_user) => HttpResponse::Ok().json(&created_user),
         Err(error) => HttpResponse::BadRequest().json(error.to_string()),
     }
 }
@@ -62,20 +65,24 @@ pub async fn edit_user(
     let mut conn = pool.get().unwrap();
     let user_id = path.into_inner();
 
-    let updated_user = UserEdit {
+    let new_user = UserEdit {
         username: body.username.clone(),
         email: body.email.clone(),
-        hash: body.hash.clone(),
+        hash: if let Some(hashed) = &body.hash {
+            Some(hash_password(hashed.as_str()).unwrap())
+        } else {
+            None
+        },
         role: None,
         updated_at: Some(Utc::now().naive_utc()),
     };
 
     match update(users)
         .filter(id.eq(user_id))
-        .set(&updated_user)
-        .execute(&mut conn)
+        .set(&new_user)
+        .get_result::<User>(&mut conn)
     {
-        Ok(_) => HttpResponse::Ok().json(&updated_user),
+        Ok(updated_user) => HttpResponse::Ok().json(&updated_user),
         Err(error) => HttpResponse::BadRequest().json(error.to_string()),
     }
 }
