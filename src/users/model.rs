@@ -40,8 +40,20 @@ impl FromSql<crate::schema::sql_types::Roles, Pg> for Roles {
     }
 }
 
+impl Roles {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Roles::Admin => "admin",
+            Roles::Doctor => "doctor",
+            Roles::Patient => "patient",
+        }
+    }
+}
+
 use crate::schema::users;
-#[derive(Queryable, Selectable, Identifiable, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(
+    Queryable, Selectable, Identifiable, Debug, PartialEq, Deserialize, Serialize, Insertable,
+)]
 #[diesel(table_name = users)]
 pub struct User {
     pub id: Uuid,
@@ -51,4 +63,12 @@ pub struct User {
     pub role: Roles,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateUser {
+    pub username: String,
+    pub email: String,
+    pub hash: String,
+    pub role: Option<Roles>,
 }
