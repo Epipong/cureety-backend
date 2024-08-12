@@ -41,6 +41,16 @@ impl FromSql<crate::schema::sql_types::Roles, Pg> for Roles {
     }
 }
 
+// impl Roles {
+//     fn as_str(&self) -> &str {
+//         match self {
+//             Roles::Admin => "admin",
+//             Roles::Doctor => "doctor",
+//             Roles::Patient => "patient",
+//         }
+//     }
+// }
+
 use crate::schema::users;
 #[derive(Queryable, Selectable, Identifiable, Debug, PartialEq, Deserialize, Serialize)]
 #[diesel(table_name = users)]
@@ -52,16 +62,4 @@ pub struct User {
     pub role: Roles,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
-}
-
-pub struct AppState {
-    pub user_db: Arc<Mutex<Vec<User>>>,
-}
-
-impl AppState {
-    pub fn init() -> AppState {
-        AppState {
-            user_db: Arc::new(Mutex::new(Vec::new())),
-        }
-    }
 }

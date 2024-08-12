@@ -4,6 +4,8 @@ use diesel::{prelude::*, r2d2::{self, ConnectionManager, Pool}};
 
 mod schema;
 mod users;
+mod errors;
+mod utils;
 
 fn get_pool() -> Pool<ConnectionManager<PgConnection>> {
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");

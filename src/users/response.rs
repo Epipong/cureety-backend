@@ -7,3 +7,9 @@ pub struct UserListResponse {
   pub results: usize,
   pub users: Vec<User>,
 }
+
+#[derive(Serialize, Debug)]
+pub struct GenericResponse {
+    pub status: String,
+    pub message: String,
+}

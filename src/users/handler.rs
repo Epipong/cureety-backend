@@ -1,12 +1,14 @@
-use actix_web::{body, get, post, web, HttpResponse, Responder};
-use diesel::{QueryDsl, RunQueryDsl, SelectableHelper};
+use actix_web::{get, post, web, HttpResponse, Responder};
+use chrono::Utc;
+use diesel::{
+    dsl::insert_into, ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper
+};
+use uuid::Uuid;
 
 use crate::{
-    schema::users,
-    users::model::{Pool, User},
+    schema::users::{self, dsl::*},
+    users::model::{Pool, Roles, User}, utils::hash_password,
 };
-
-use super::model::AppState;
 
 #[get("/users")]
 pub async fn users_list(pool: web::Data<Pool>) -> impl Responder {
@@ -20,16 +22,32 @@ pub async fn users_list(pool: web::Data<Pool>) -> impl Responder {
 }
 
 #[post("/users")]
-pub async fn create_user(
-    mut body: web::Json<User>,
-    data: web::Data<AppState>
-) -> impl Responder {
-    let mut vec = data.user_db.lock().unwrap();
+pub async fn create_user(body: web::Json<User>, pool: web::Data<Pool>) -> impl Responder {
+    let mut conn = pool.get().unwrap();
+    let items = users::table
+        .select(User::as_select())
+        .load::<User>(&mut conn)
+        .expect("select");
 
-    HttpResponse::Ok().json(0)
+    let hashed = hash_password(body.hash.as_str()).unwrap();
+    let datetime = Utc::now().naive_utc();
+
+    let created_user = User {
+        id: Uuid::new_v4(),
+        username: body.username.clone(),
+        email: body.email.clone(),
+        hash: hashed,
+        role: Roles::Patient,
+        created_at: datetime,
+        updated_at: datetime,
+    };
+
+    HttpResponse::Ok().json(created_user)
 }
 
 pub fn config(conf: &mut web::ServiceConfig) {
-    let scope = web::scope("/api").service(users_list);
+    let scope = web::scope("/api")
+        .service(users_list)
+        .service(create_user);
     conf.service(scope);
 }
