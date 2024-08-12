@@ -1,7 +1,7 @@
-use actix_web::{get, patch, post, web, HttpResponse, Responder};
+use actix_web::{delete, get, patch, post, web, HttpResponse, Responder};
 use chrono::Utc;
 use diesel::{
-    dsl::insert_into, update, ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper,
+    dsl::{delete, insert_into}, update, ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper,
 };
 use uuid::Uuid;
 
@@ -87,10 +87,22 @@ pub async fn edit_user(
     }
 }
 
+#[delete("/users/{user_id}")]
+pub async fn delete_user(path: web::Path<Uuid>, pool: web::Data<Pool>) -> impl Responder {
+    let mut conn = pool.get().unwrap();
+    let user_id = path.into_inner();
+
+    match delete(users).filter(id.eq(user_id)).get_result::<User>(&mut conn) {
+        Ok(deleted_user) => HttpResponse::Ok().json(&deleted_user),
+        Err(error) => HttpResponse::BadRequest().json(error.to_string()),
+    }
+}
+
 pub fn config(conf: &mut web::ServiceConfig) {
     let scope = web::scope("/api")
         .service(users_list)
         .service(create_user)
-        .service(edit_user);
+        .service(edit_user)
+        .service(delete_user);
     conf.service(scope);
 }
