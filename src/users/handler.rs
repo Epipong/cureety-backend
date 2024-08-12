@@ -1,6 +1,8 @@
-use actix_web::{get, post, web, HttpResponse, Responder};
+use actix_web::{get, patch, post, web, HttpResponse, Responder};
 use chrono::Utc;
-use diesel::{dsl::insert_into, QueryDsl, RunQueryDsl, SelectableHelper};
+use diesel::{
+    dsl::insert_into, update, ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper,
+};
 use uuid::Uuid;
 
 use crate::{
@@ -9,6 +11,8 @@ use crate::{
     utils::hash_password,
 };
 
+use super::model::UserEdit;
+
 #[get("/users")]
 pub async fn users_list(pool: web::Data<Pool>) -> impl Responder {
     let mut conn = pool.get().unwrap();
@@ -16,7 +20,7 @@ pub async fn users_list(pool: web::Data<Pool>) -> impl Responder {
         .select(User::as_select())
         .load::<User>(&mut conn)
     {
-        Ok(items) => HttpResponse::Ok().json(items),
+        Ok(items) => HttpResponse::Ok().json(&items),
         Err(error) => HttpResponse::BadRequest().json(error.to_string()),
     }
 }
@@ -44,12 +48,42 @@ pub async fn create_user(body: web::Json<UserCreate>, pool: web::Data<Pool>) -> 
     };
 
     match insert_into(users).values(&new_user).execute(&mut conn) {
-        Ok(_) => HttpResponse::Ok().json(new_user),
+        Ok(_) => HttpResponse::Ok().json(&new_user),
+        Err(error) => HttpResponse::BadRequest().json(error.to_string()),
+    }
+}
+
+#[patch("/users/{user_id}")]
+pub async fn edit_user(
+    path: web::Path<Uuid>,
+    body: web::Json<UserEdit>,
+    pool: web::Data<Pool>,
+) -> impl Responder {
+    let mut conn = pool.get().unwrap();
+    let user_id = path.into_inner();
+
+    let updated_user = UserEdit {
+        username: body.username.clone(),
+        email: body.email.clone(),
+        hash: body.hash.clone(),
+        role: None,
+        updated_at: Some(Utc::now().naive_utc()),
+    };
+
+    match update(users)
+        .filter(id.eq(user_id))
+        .set(&updated_user)
+        .execute(&mut conn)
+    {
+        Ok(_) => HttpResponse::Ok().json(&updated_user),
         Err(error) => HttpResponse::BadRequest().json(error.to_string()),
     }
 }
 
 pub fn config(conf: &mut web::ServiceConfig) {
-    let scope = web::scope("/api").service(users_list).service(create_user);
+    let scope = web::scope("/api")
+        .service(users_list)
+        .service(create_user)
+        .service(edit_user);
     conf.service(scope);
 }

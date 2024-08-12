@@ -73,10 +73,12 @@ pub struct UserCreate {
     pub role: Option<Roles>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, AsChangeset)]
+#[diesel(table_name = users)]
 pub struct UserEdit {
     pub username: Option<String>,
     pub email: Option<String>,
     pub hash: Option<String>,
     pub role: Option<Roles>,
+    pub updated_at: Option<NaiveDateTime>,
 }
