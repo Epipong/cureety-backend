@@ -7,7 +7,6 @@ pub static SECRET_KEY: Lazy<String> =
 
 const SALT: &[u8] = b"supersecuresalt";
 
-// PLEASE NOTE THIS IS ONLY FOR DEMO PLEASE DO MORE RESEARCH FOR PRODUCTION USE
 pub fn hash_password(password: &str) -> Result<String, ServiceError> {
     let config = argon2::Config {
         secret: SECRET_KEY.as_bytes(),

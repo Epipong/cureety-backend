@@ -42,6 +42,7 @@ pub async fn create_user(body: web::Json<User>, pool: web::Data<Pool>) -> impl R
         updated_at: datetime,
     };
 
+
     HttpResponse::Ok().json(created_user)
 }
 

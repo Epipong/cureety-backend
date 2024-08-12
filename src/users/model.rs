@@ -7,7 +7,6 @@ use diesel::serialize::{self, IsNull, Output, ToSql};
 use diesel::{prelude::*, r2d2::ConnectionManager, PgConnection};
 use serde::{Deserialize, Serialize};
 use std::io::Write;
-use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
@@ -40,16 +39,6 @@ impl FromSql<crate::schema::sql_types::Roles, Pg> for Roles {
         }
     }
 }
-
-// impl Roles {
-//     fn as_str(&self) -> &str {
-//         match self {
-//             Roles::Admin => "admin",
-//             Roles::Doctor => "doctor",
-//             Roles::Patient => "patient",
-//         }
-//     }
-// }
 
 use crate::schema::users;
 #[derive(Queryable, Selectable, Identifiable, Debug, PartialEq, Deserialize, Serialize)]
