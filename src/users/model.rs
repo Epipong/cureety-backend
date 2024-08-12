@@ -66,9 +66,17 @@ pub struct User {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct CreateUser {
+pub struct UserCreate {
     pub username: String,
     pub email: String,
     pub hash: String,
+    pub role: Option<Roles>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UserEdit {
+    pub username: Option<String>,
+    pub email: Option<String>,
+    pub hash: Option<String>,
     pub role: Option<Roles>,
 }

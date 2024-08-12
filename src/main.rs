@@ -1,10 +1,18 @@
 use actix_identity::IdentityMiddleware;
-use actix_web::{middleware, web, App, HttpServer};
-use diesel::{prelude::*, r2d2::{self, ConnectionManager, Pool}};
+use actix_web::{
+    http::StatusCode,
+    middleware::{self, ErrorHandlers},
+    web, App, HttpServer,
+};
+use diesel::{
+    prelude::*,
+    r2d2::{self, ConnectionManager, Pool},
+};
+use errors::add_error_header;
 
+mod errors;
 mod schema;
 mod users;
-mod errors;
 mod utils;
 
 fn get_pool() -> Pool<ConnectionManager<PgConnection>> {
@@ -38,6 +46,7 @@ async fn main() -> std::io::Result<()> {
             .configure(users::handler::config)
             .wrap(IdentityMiddleware::default())
             .wrap(middleware::Logger::default())
+            .wrap(ErrorHandlers::new().handler(StatusCode::BAD_REQUEST, add_error_header))
     })
     .bind(("127.0.0.1", port))?
     .run()

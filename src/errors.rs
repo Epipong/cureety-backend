@@ -1,4 +1,6 @@
-use actix_web::{error::ResponseError, HttpResponse};
+use actix_web::{
+    dev, error::ResponseError, http::header, middleware::ErrorHandlerResponse, HttpResponse, Result,
+};
 use derive_more::Display;
 use diesel::result::{DatabaseErrorKind, Error as DBError};
 use uuid::Error as ParseError;
@@ -51,4 +53,13 @@ impl From<DBError> for ServiceError {
             _ => ServiceError::InternalServerError,
         }
     }
+}
+
+pub fn add_error_header<B>(mut res: dev::ServiceResponse<B>) -> Result<ErrorHandlerResponse<B>> {
+    res.response_mut().headers_mut().insert(
+        header::CONTENT_TYPE,
+        header::HeaderValue::from_static("Error"),
+    );
+
+    Ok(ErrorHandlerResponse::Response(res.map_into_left_body()))
 }
