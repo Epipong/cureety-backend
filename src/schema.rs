@@ -1,7 +1,6 @@
 // @generated automatically by Diesel CLI.
 
 pub mod sql_types {
-    use derive_more::derive::Display;
     use diesel::sql_types::SqlType;
 
     #[derive(SqlType, Debug)]

@@ -10,7 +10,7 @@ use std::io::Write;
 use uuid::Uuid;
 
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
-#[derive(Debug, PartialEq, FromSqlRow, AsExpression, Deserialize, Serialize, Eq)]
+#[derive(Debug, PartialEq, FromSqlRow, AsExpression, Deserialize, Serialize, Eq, Clone)]
 #[diesel(sql_type = crate::schema::sql_types::Roles)]
 pub enum Roles {
     Admin,
