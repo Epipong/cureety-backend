@@ -1,5 +1,4 @@
 use actix_web::{delete, get, patch, post, web, HttpResponse, Responder, ResponseError};
-use chrono::Utc;
 use diesel::{
     dsl::{delete, insert_into},
     update, ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper,
@@ -9,15 +8,15 @@ use uuid::Uuid;
 use crate::{
     errors::ServiceError,
     schema::users::{self, dsl::*},
-    users::models::{Pool, Roles, User, UserCreate},
-    utils::hash_password,
+    users::models::{Pool, User, UserCreate},
 };
 
 use super::models::UserEdit;
 
 #[get("/users")]
-pub async fn get_users(pool: web::Data<Pool>) -> impl Responder {
-    let mut conn = pool.get().unwrap();
+pub async fn get_users(db: web::Data<Pool>) -> impl Responder {
+    let mut conn = db.get().unwrap();
+
     match users::table
         .select(User::as_select())
         .load::<User>(&mut conn)
@@ -27,28 +26,23 @@ pub async fn get_users(pool: web::Data<Pool>) -> impl Responder {
     }
 }
 
+#[get("/users/{id}")]
+pub async fn get_user_by_id(db: web::Data<Pool>, user_id: web::Path<Uuid>) -> impl Responder {
+    let mut conn = db.get().unwrap();
+
+    match users
+        .find(user_id.into_inner())
+        .get_result::<User>(&mut conn)
+    {
+        Ok(user) => HttpResponse::Ok().json(&user),
+        Err(error) => ServiceError::BadRequest(error.to_string()).error_response(),
+    }
+}
+
 #[post("/users")]
-pub async fn add_user(body: web::Json<UserCreate>, pool: web::Data<Pool>) -> impl Responder {
-    let mut conn = pool.get().unwrap();
-
-    let datetime = Utc::now().naive_utc();
-
-    // TODO: only admin can assign roles
-    let user_role = if let Some(user_role) = &body.role {
-        user_role
-    } else {
-        &Roles::Patient
-    };
-
-    let new_user = User {
-        id: Uuid::new_v4(),
-        username: body.username.clone(),
-        email: body.email.clone(),
-        hash: hash_password(&body.hash).unwrap(),
-        role: user_role.clone(),
-        created_at: datetime,
-        updated_at: datetime,
-    };
+pub async fn add_user(body: web::Json<UserCreate>, db: web::Data<Pool>) -> impl Responder {
+    let mut conn = db.get().unwrap();
+    let new_user = User::from_create(&body);
 
     match insert_into(users)
         .values(&new_user)
@@ -59,35 +53,15 @@ pub async fn add_user(body: web::Json<UserCreate>, pool: web::Data<Pool>) -> imp
     }
 }
 
-#[patch("/users/{user_id}")]
+#[patch("/users/{id}")]
 pub async fn update_user(
     path: web::Path<Uuid>,
     body: web::Json<UserEdit>,
-    pool: web::Data<Pool>,
+    db: web::Data<Pool>,
 ) -> impl Responder {
-    let mut conn = pool.get().unwrap();
+    let mut conn = db.get().unwrap();
     let user_id = path.into_inner();
-
-    let user_hash = if let Some(hashed) = &body.hash {
-        Some(hash_password(hashed.as_str()).unwrap())
-    } else {
-        None
-    };
-
-    // TODO: only admin can assign roles
-    let user_role = if let Some(user_role) = &body.role {
-        Some(user_role.clone())
-    } else {
-        None
-    };
-
-    let updated_user = UserEdit {
-        username: body.username.clone(),
-        email: body.email.clone(),
-        hash: user_hash,
-        role: user_role,
-        updated_at: Some(Utc::now().naive_utc()),
-    };
+    let updated_user = User::from_edit(&body);
 
     match update(users)
         .filter(id.eq(user_id))
@@ -99,9 +73,9 @@ pub async fn update_user(
     }
 }
 
-#[delete("/users/{user_id}")]
-pub async fn delete_user(path: web::Path<Uuid>, pool: web::Data<Pool>) -> impl Responder {
-    let mut conn = pool.get().unwrap();
+#[delete("/users/{id}")]
+pub async fn delete_user(path: web::Path<Uuid>, db: web::Data<Pool>) -> impl Responder {
+    let mut conn = db.get().unwrap();
     let user_id = path.into_inner();
 
     match delete(users)
@@ -116,6 +90,7 @@ pub async fn delete_user(path: web::Path<Uuid>, pool: web::Data<Pool>) -> impl R
 pub fn config(conf: &mut web::ServiceConfig) {
     let scope = web::scope("/api")
         .service(get_users)
+        .service(get_user_by_id)
         .service(add_user)
         .service(update_user)
         .service(delete_user);

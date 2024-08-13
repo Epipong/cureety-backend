@@ -8,7 +8,6 @@ use diesel::{
     prelude::*,
     r2d2::{self, ConnectionManager, Pool},
 };
-use errors::add_error_header;
 
 mod errors;
 mod schema;
@@ -46,7 +45,6 @@ async fn main() -> std::io::Result<()> {
             .configure(users::handlers::config)
             .wrap(IdentityMiddleware::default())
             .wrap(middleware::Logger::default())
-            .wrap(ErrorHandlers::new().handler(StatusCode::BAD_REQUEST, add_error_header))
     })
     .bind(("127.0.0.1", port))?
     .run()

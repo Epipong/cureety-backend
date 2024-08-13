@@ -1,11 +1,16 @@
+use chrono::NaiveDateTime;
 use serde::Serialize;
-use super::models::User;
+use uuid::Uuid;
+use super::models::Roles;
 
 #[derive(Serialize, Debug)]
-pub struct UserListResponse {
-  pub status: String,
-  pub results: usize,
-  pub users: Vec<User>,
+pub struct UserResponse {
+  pub id: Uuid,
+  pub username: String,
+  pub email: String,
+  pub role: Roles,
+  pub created_at: NaiveDateTime,
+  pub updated_at: NaiveDateTime,
 }
 
 #[derive(Serialize, Debug)]
