@@ -5,6 +5,8 @@ use derive_more::Display;
 use diesel::result::{DatabaseErrorKind, Error as DBError};
 use uuid::Error as ParseError;
 
+use crate::users::response::GenericResponse;
+
 #[derive(Debug, Display)]
 pub enum ServiceError {
     #[display("Internal Server Error")]
@@ -22,10 +24,21 @@ impl ResponseError for ServiceError {
     fn error_response(&self) -> HttpResponse {
         match self {
             ServiceError::InternalServerError => {
-                HttpResponse::InternalServerError().json("Internal Server Error, Please try later")
+                HttpResponse::InternalServerError().json(GenericResponse {
+                    status: "500 Internal Server Error".to_string(),
+                    message: "Internal Server Error, Please try later".to_string(),
+                })
             }
-            ServiceError::BadRequest(ref message) => HttpResponse::BadRequest().json(message),
-            ServiceError::Unauthorized => HttpResponse::Unauthorized().json("Unauthorized"),
+            ServiceError::BadRequest(ref message) => {
+                HttpResponse::BadRequest().json(GenericResponse {
+                    status: "400 Bad Request".to_string(),
+                    message: message.to_string(),
+                })
+            }
+            ServiceError::Unauthorized => HttpResponse::Unauthorized().json(GenericResponse {
+                status: "401 Unauthorized".to_string(),
+                message: "Unauthorized".to_string(),
+            }),
         }
     }
 }
@@ -58,7 +71,7 @@ impl From<DBError> for ServiceError {
 pub fn add_error_header<B>(mut res: dev::ServiceResponse<B>) -> Result<ErrorHandlerResponse<B>> {
     res.response_mut().headers_mut().insert(
         header::CONTENT_TYPE,
-        header::HeaderValue::from_static("Error"),
+        header::HeaderValue::from_static("application/json"),
     );
 
     Ok(ErrorHandlerResponse::Response(res.map_into_left_body()))

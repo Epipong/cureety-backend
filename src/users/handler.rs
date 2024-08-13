@@ -1,11 +1,13 @@
-use actix_web::{delete, get, patch, post, web, HttpResponse, Responder};
+use actix_web::{delete, get, patch, post, web, HttpResponse, Responder, ResponseError};
 use chrono::Utc;
 use diesel::{
-    dsl::{delete, insert_into}, update, ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper,
+    dsl::{delete, insert_into},
+    update, ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper,
 };
 use uuid::Uuid;
 
 use crate::{
+    errors::ServiceError,
     schema::users::{self, dsl::*},
     users::model::{Pool, Roles, User, UserCreate},
     utils::hash_password,
@@ -21,7 +23,7 @@ pub async fn users_list(pool: web::Data<Pool>) -> impl Responder {
         .load::<User>(&mut conn)
     {
         Ok(users_list) => HttpResponse::Ok().json(&users_list),
-        Err(error) => HttpResponse::BadRequest().json(error.to_string()),
+        Err(error) => ServiceError::BadRequest(error.to_string()).error_response(),
     }
 }
 
@@ -53,7 +55,7 @@ pub async fn create_user(body: web::Json<UserCreate>, pool: web::Data<Pool>) -> 
         .get_result::<User>(&mut conn)
     {
         Ok(created_user) => HttpResponse::Ok().json(&created_user),
-        Err(error) => HttpResponse::BadRequest().json(error.to_string()),
+        Err(error) => ServiceError::BadRequest(error.to_string()).error_response(),
     }
 }
 
@@ -93,7 +95,7 @@ pub async fn edit_user(
         .get_result::<User>(&mut conn)
     {
         Ok(edited_user) => HttpResponse::Ok().json(&edited_user),
-        Err(error) => HttpResponse::BadRequest().json(error.to_string()),
+        Err(error) => ServiceError::BadRequest(error.to_string()).error_response(),
     }
 }
 
@@ -102,9 +104,12 @@ pub async fn delete_user(path: web::Path<Uuid>, pool: web::Data<Pool>) -> impl R
     let mut conn = pool.get().unwrap();
     let user_id = path.into_inner();
 
-    match delete(users).filter(id.eq(user_id)).get_result::<User>(&mut conn) {
+    match delete(users)
+        .filter(id.eq(user_id))
+        .get_result::<User>(&mut conn)
+    {
         Ok(deleted_user) => HttpResponse::Ok().json(&deleted_user),
-        Err(error) => HttpResponse::BadRequest().json(error.to_string()),
+        Err(error) => ServiceError::BadRequest(error.to_string()).error_response(),
     }
 }
 
