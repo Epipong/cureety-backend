@@ -1,5 +1,5 @@
 use serde::Serialize;
-use super::model::User;
+use super::models::User;
 
 #[derive(Serialize, Debug)]
 pub struct UserListResponse {

@@ -9,14 +9,14 @@ use uuid::Uuid;
 use crate::{
     errors::ServiceError,
     schema::users::{self, dsl::*},
-    users::model::{Pool, Roles, User, UserCreate},
+    users::models::{Pool, Roles, User, UserCreate},
     utils::hash_password,
 };
 
-use super::model::UserEdit;
+use super::models::UserEdit;
 
 #[get("/users")]
-pub async fn users_list(pool: web::Data<Pool>) -> impl Responder {
+pub async fn get_users(pool: web::Data<Pool>) -> impl Responder {
     let mut conn = pool.get().unwrap();
     match users::table
         .select(User::as_select())
@@ -28,7 +28,7 @@ pub async fn users_list(pool: web::Data<Pool>) -> impl Responder {
 }
 
 #[post("/users")]
-pub async fn create_user(body: web::Json<UserCreate>, pool: web::Data<Pool>) -> impl Responder {
+pub async fn add_user(body: web::Json<UserCreate>, pool: web::Data<Pool>) -> impl Responder {
     let mut conn = pool.get().unwrap();
 
     let datetime = Utc::now().naive_utc();
@@ -60,7 +60,7 @@ pub async fn create_user(body: web::Json<UserCreate>, pool: web::Data<Pool>) -> 
 }
 
 #[patch("/users/{user_id}")]
-pub async fn edit_user(
+pub async fn update_user(
     path: web::Path<Uuid>,
     body: web::Json<UserEdit>,
     pool: web::Data<Pool>,
@@ -115,9 +115,9 @@ pub async fn delete_user(path: web::Path<Uuid>, pool: web::Data<Pool>) -> impl R
 
 pub fn config(conf: &mut web::ServiceConfig) {
     let scope = web::scope("/api")
-        .service(users_list)
-        .service(create_user)
-        .service(edit_user)
+        .service(get_users)
+        .service(add_user)
+        .service(update_user)
         .service(delete_user);
     conf.service(scope);
 }

@@ -43,7 +43,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(pool.clone()))
-            .configure(users::handler::config)
+            .configure(users::handlers::config)
             .wrap(IdentityMiddleware::default())
             .wrap(middleware::Logger::default())
             .wrap(ErrorHandlers::new().handler(StatusCode::BAD_REQUEST, add_error_header))
