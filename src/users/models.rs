@@ -12,6 +12,7 @@ use uuid::Uuid;
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 #[derive(Debug, PartialEq, FromSqlRow, AsExpression, Deserialize, Serialize, Eq, Clone)]
 #[diesel(sql_type = crate::schema::sql_types::Roles)]
+#[serde(rename_all = "lowercase")]
 pub enum Roles {
     Admin,
     Doctor,

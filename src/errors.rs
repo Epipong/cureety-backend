@@ -1,5 +1,5 @@
 use actix_web::{
-    dev, error::ResponseError, http::header, middleware::ErrorHandlerResponse, HttpResponse, Result,
+    error::ResponseError, HttpResponse,
 };
 use derive_more::Display;
 use diesel::result::{DatabaseErrorKind, Error as DBError};

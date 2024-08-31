@@ -1,9 +1,5 @@
 use actix_identity::IdentityMiddleware;
-use actix_web::{
-    http::StatusCode,
-    middleware::{self, ErrorHandlers},
-    web, App, HttpServer,
-};
+use actix_web::{middleware, web, App, HttpServer};
 use diesel::{
     prelude::*,
     r2d2::{self, ConnectionManager, Pool},
@@ -42,11 +38,11 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(pool.clone()))
-            .configure(users::handlers::config)
+            .service(web::scope("/cureety").configure(users::handlers::config))
             .wrap(IdentityMiddleware::default())
             .wrap(middleware::Logger::default())
     })
-    .bind(("127.0.0.1", port))?
+    .bind((domain, port))?
     .run()
     .await
 }
